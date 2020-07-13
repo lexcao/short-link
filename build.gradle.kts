@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.3.72"
+    application
 }
 group = "lexcao.github.io"
 version = "1.0-SNAPSHOT"
@@ -32,6 +33,7 @@ tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-tasks.withType<Jar> {
-    archiveVersion.set("")
+application {
+    mainClassName = "io.ktor.server.netty.EngineMain"
 }
+
