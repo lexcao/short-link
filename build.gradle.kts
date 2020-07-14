@@ -42,6 +42,7 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
+                dependsOn(commonMain)
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("io.ktor:ktor-server-netty:$ktorVersion")
                 implementation("io.ktor:ktor-server-core:$ktorVersion")
@@ -54,6 +55,7 @@ kotlin {
         }
         val jsMain by getting {
             dependencies {
+                dependsOn(commonMain)
                 implementation(kotlin("stdlib-js"))
                 implementation("org.jetbrains.kotlinx:kotlinx-html-js:$kotlinHtmlVersion")
             }

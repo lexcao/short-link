@@ -1,5 +1,6 @@
 package io.github.lexcao.shortlink
 
+import io.github.lexcao.shortlink.common.Link
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -62,11 +63,6 @@ fun Application.main() {
         }
     }
 }
-
-data class Link(
-    val name: String? = null,
-    val url: String
-)
 
 fun HTML.index() {
     head {
