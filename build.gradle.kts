@@ -25,6 +25,7 @@ dependencies {
     implementation("io.ktor:ktor-jackson:$ktorVersion")
 
     implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.7.1")
 
     implementation("io.github.microutils:kotlin-logging:1.7.9")
     implementation("ch.qos.logback:logback-classic:1.2.3")
