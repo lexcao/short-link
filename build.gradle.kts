@@ -1,5 +1,12 @@
+import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
+
 plugins {
-    kotlin("multiplatform") version "1.3.72"
+
+    val kotlinVersion = "1.3.72"
+
+    application
+    kotlin("multiplatform") version kotlinVersion
+    kotlin("plugin.serialization") version kotlinVersion
 }
 
 group = "lexcao.github.io"
@@ -7,6 +14,7 @@ version = "1.0-SNAPSHOT"
 
 val ktorVersion: String by project
 val kotlinHtmlVersion: String by project
+val serializationVersion: String by project
 
 repositories {
     mavenCentral()
@@ -18,59 +26,105 @@ repositories {
 kotlin {
 
     jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
-        }
-        tasks.getByName<Jar>("jvmJar") {
-            archiveVersion.set("")
-            manifest {
-                attributes["Main-Class"] = "io.ktor.server.netty.EngineMain"
-            }
-            doFirst {
-                from(configurations["jvmCompileClasspath"].map { zipTree(it.absolutePath) })
+        withJava()
+    }
+
+    js {
+        browser {
+            // https://kotlinlang.org/docs/reference/javascript-dce.html#known-issue-dce-and-ktor
+            dceTask {
+                keep("ktor-ktor-io.\$\$importsForInline\$\$.ktor-ktor-io.io.ktor.utils.io")
             }
         }
     }
-
-    js { browser() }
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:0.20.0")
             }
         }
         val jvmMain by getting {
             dependencies {
-                dependsOn(commonMain)
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("io.ktor:ktor-server-netty:$ktorVersion")
                 implementation("io.ktor:ktor-server-core:$ktorVersion")
-                implementation("io.ktor:ktor-html-builder:$ktorVersion")
-                implementation("io.ktor:ktor-jackson:$ktorVersion")
-                implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:$kotlinHtmlVersion")
-                implementation("io.github.microutils:kotlin-logging:1.7.9")
+                implementation("io.ktor:ktor-serialization:$ktorVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationVersion")
+
                 implementation("ch.qos.logback:logback-classic:1.2.3")
             }
         }
         val jsMain by getting {
             dependencies {
-                dependsOn(commonMain)
                 implementation(kotlin("stdlib-js"))
+                implementation("io.ktor:ktor-client-js:$ktorVersion")
+                implementation("io.ktor:ktor-client-json-js:$ktorVersion")
+                implementation("io.ktor:ktor-client-serialization-js:$ktorVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-html-js:$kotlinHtmlVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime-js:$serializationVersion")
+
+                // fix stuff
+                implementation(npm("text-encoding"))
+                implementation(npm("abort-controller"))
+                implementation(npm("bufferutil"))
+                implementation(npm("utf-8-validate"))
+                implementation(npm("fs"))
+
+                // react
+                implementation("org.jetbrains:kotlin-react:16.13.1-pre.105-kotlin-1.3.72")
+                implementation("org.jetbrains:kotlin-react-dom:16.13.1-pre.105-kotlin-1.3.72")
+                implementation(npm("react", "16.13.1"))
+                implementation(npm("react-dom", "16.13.1"))
+
+                // kotlin styled
+                implementation("org.jetbrains:kotlin-styled:1.0.0-pre.110-kotlin-1.3.72")
+                implementation(npm("styled-components"))
+                implementation(npm("inline-style-prefixer"))
             }
         }
     }
 }
 
-/*tasks.getByName<KotlinWebpack>("jsBrowserProductionWebpack") {
-    outputFileName = "output.js"
-}*/
-/*tasks.getByName<Jar>("jvmJar") {
+application {
+    mainClassName = "io.github.lexcao.shortlink.ApplicationKt"
+}
 
-    *//*dependsOn(tasks.getByName("jsBrowserProductionWebpack"))
-    val jsBrowserProductionWebpack =
-        tasks.getByName<org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack>("jsBrowserProductionWebpack")
-    from(File(jsBrowserProductionWebpack.destinationDirectory, jsBrowserProductionWebpack.outputFileName))
-*//*
-}*/
+distributions {
+    main {
+        contents {
+            from("$buildDir/libs") {
+                rename("${rootProject.name}-jvm", rootProject.name)
+                into("lib")
+            }
+        }
+    }
+}
+
+tasks.getByName<Jar>("jvmJar") {
+    val webpack = tasks.getByName<KotlinWebpack>(getWebpackTask())
+    dependsOn(webpack)
+    from(File(webpack.destinationDirectory, webpack.outputFileName!!))
+}
+
+fun getWebpackTask(): String {
+    val production: String? by project
+    return if (production?.toBoolean() == true) {
+        System.err.println("Production is enabled.")
+        "jsBrowserProductionWebpack"
+    } else {
+        "jsBrowserDevelopmentWebpack"
+    }
+}
+
+// Alias "installDist" as "stage" for Heroku
+tasks.create("stage") {
+    dependsOn(tasks.getByName("installDist"))
+}
+
+tasks.getByName<JavaExec>("run") {
+    // so that the JS artifacts generated by `jvmJar` can be found and served
+    classpath(tasks.getByName<Jar>("jvmJar"))
+}
+

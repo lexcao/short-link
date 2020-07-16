@@ -4,45 +4,51 @@ import io.github.lexcao.shortlink.common.Link
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.features.Compression
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.DefaultHeaders
-import io.ktor.html.respondHtml
-import io.ktor.http.HttpStatusCode
-import io.ktor.jackson.jackson
+import io.ktor.features.gzip
+import io.ktor.http.ContentType
+import io.ktor.http.content.resource
+import io.ktor.http.content.static
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.response.respondRedirect
+import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.post
 import io.ktor.routing.routing
-import kotlinx.html.ButtonType
-import kotlinx.html.HTML
-import kotlinx.html.body
-import kotlinx.html.button
-import kotlinx.html.h1
-import kotlinx.html.head
-import kotlinx.html.header
-import kotlinx.html.id
-import kotlinx.html.label
-import kotlinx.html.main
-import kotlinx.html.postForm
-import kotlinx.html.textInput
-import kotlinx.html.title
+import io.ktor.serialization.json
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.run
 
 private val store = ConcurrentHashMap<String, Link>()
 
-fun Application.main() {
+fun main() {
+    val port = System.getenv("PORT")?.toInt() ?: 9090
+    embeddedServer(Netty, port, module = Application::run).start(wait = true)
+}
+
+fun Application.run() {
 
     install(DefaultHeaders)
-    install(ContentNegotiation) { jackson() }
+    install(ContentNegotiation) { json() }
+    install(Compression) { gzip() }
 
     routing {
-        get("/") {
-            call.respondHtml(HttpStatusCode.OK, HTML::index)
+        static("") {
+            resource("/short-link.js", "short-link.js")
         }
-        post("/link") {
+        get("/") {
+            call.respondText(
+                this::class.java.classLoader.getResource("index.html")!!.readText(),
+                ContentType.Text.Html
+            )
+        }
+        post(Link.path) {
             val link = call.receive<Link>()
 
             // TODO validation
@@ -59,40 +65,6 @@ fun Application.main() {
             store[name]?.run {
                 call.respondRedirect(url)
             }
-            call.respondHtml(HttpStatusCode.NotFound, HTML::notFound)
-        }
-    }
-}
-
-fun HTML.index() {
-    head {
-        title("S-L Short Link")
-    }
-    body {
-        header {
-            h1 { +"S-L Short Link" }
-        }
-        main {
-            postForm {
-                id = "form"
-
-                label { +"Name" }
-                textInput(name = "name")
-                label { +"URL" }
-                textInput(name = "url")
-                button(type = ButtonType.submit) { +"Create" }
-            }
-        }
-    }
-}
-
-fun HTML.notFound() {
-    head {
-        title("404 not found")
-    }
-    body {
-        header {
-            h1 { +"404 Sorry, not Found." }
         }
     }
 }
