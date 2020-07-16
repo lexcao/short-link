@@ -73,7 +73,7 @@ fun main() {
 }
 
 val App = functionalComponent<RProps> { _ ->
-    val (link, setLink) = useState { Link("", "") }
+    val (link, setLink) = useState { Link(name = "", url = "") }
 
     val handleSubmit: (Event) -> Unit = {
         it.preventDefault()
@@ -118,7 +118,7 @@ val App = functionalComponent<RProps> { _ ->
             attrs.onSubmitFunction = handleSubmit
             textInput(
                 name = "Name",
-                value = link.name ?: "",
+                value = link.name,
                 onChange = handleNameChange
             )
             textInput(

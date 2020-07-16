@@ -22,7 +22,6 @@ import io.ktor.routing.routing
 import io.ktor.serialization.json
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import java.util.UUID
 import kotlin.run
 
 fun main() {
@@ -47,16 +46,16 @@ fun Application.run() {
             )
         }
         post(Link.path) {
-            val link = call.receive<Link>()
+            var link = call.receive<Link>()
 
             // TODO validation
 
-            val name = link.name ?: UUID.randomUUID().toString()
+            if (link.name.trim().isBlank()) {
+                link = link.copy(name = System.currentTimeMillis().base62())
+            }
+            Store.save(link)
 
-            val copy = link.copy(name = name)
-            Store.save(copy)
-
-            call.respond(copy)
+            call.respond(link)
         }
         get("/{name}") {
             val name: String = call.parameters["name"]!!
@@ -64,5 +63,19 @@ fun Application.run() {
                 call.respondRedirect(url)
             }
         }
+    }
+}
+
+private const val BASE: String = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
+private fun Long.base62(): String {
+    var num = this
+    return buildString {
+        do {
+            val index = (num % BASE.length).toInt()
+            append(BASE[index])
+            num /= BASE.length
+        } while (num > 0)
+        reverse()
     }
 }

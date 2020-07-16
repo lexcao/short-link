@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Link(
-    val name: String? = null,
+    val name: String = "",
     val url: String
 ) {
     companion object {
