@@ -26,6 +26,9 @@ repositories {
 kotlin {
 
     jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
         withJava()
     }
 
@@ -54,6 +57,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationVersion")
 
                 implementation("ch.qos.logback:logback-classic:1.2.3")
+                implementation("org.litote.kmongo:kmongo-coroutine-serialization:4.0.3")
             }
         }
         val jsMain by getting {

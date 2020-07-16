@@ -1,6 +1,7 @@
 package io.github.lexcao.shortlink
 
 import io.github.lexcao.shortlink.common.Link
+import io.github.lexcao.shortlink.server.Store
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
@@ -22,10 +23,7 @@ import io.ktor.serialization.json
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.run
-
-private val store = ConcurrentHashMap<String, Link>()
 
 fun main() {
     val port = System.getenv("PORT")?.toInt() ?: 9090
@@ -56,13 +54,13 @@ fun Application.run() {
             val name = link.name ?: UUID.randomUUID().toString()
 
             val copy = link.copy(name = name)
-            store[name] = copy
+            Store.save(copy)
 
             call.respond(copy)
         }
         get("/{name}") {
             val name: String = call.parameters["name"]!!
-            store[name]?.run {
+            Store.findByName(name)?.run {
                 call.respondRedirect(url)
             }
         }
