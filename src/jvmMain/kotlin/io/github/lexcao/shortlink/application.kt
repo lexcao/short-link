@@ -5,6 +5,7 @@ import io.github.lexcao.shortlink.server.Store
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.features.BadRequestException
 import io.ktor.features.Compression
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.DefaultHeaders
@@ -48,13 +49,17 @@ fun Application.run() {
         post(Link.path) {
             var link = call.receive<Link>()
 
-            // TODO validation
+            if (!Link.urlRegex.matches(link.url)) {
+                throw BadRequestException("URL is required")
+            }
 
             if (link.name.trim().isBlank()) {
                 link = link.copy(name = System.currentTimeMillis().base62())
+            } else if (!Link.nameRegex.matches(link.name)) {
+                throw BadRequestException("Name is invalid")
             }
-            Store.save(link)
 
+            Store.save(link)
             call.respond(link)
         }
         get("/{name}") {

@@ -10,29 +10,44 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.css.Color
+import kotlinx.css.Cursor
 import kotlinx.css.Display
 import kotlinx.css.LinearDimension
+import kotlinx.css.Position
 import kotlinx.css.TextAlign
 import kotlinx.css.TextTransform
+import kotlinx.css.Visibility
 import kotlinx.css.backgroundColor
 import kotlinx.css.border
+import kotlinx.css.borderBottom
 import kotlinx.css.borderRadius
 import kotlinx.css.color
+import kotlinx.css.cursor
 import kotlinx.css.display
 import kotlinx.css.fontFamily
 import kotlinx.css.fontSize
+import kotlinx.css.height
 import kotlinx.css.margin
+import kotlinx.css.marginLeft
 import kotlinx.css.padding
 import kotlinx.css.paddingRight
 import kotlinx.css.pct
+import kotlinx.css.position
 import kotlinx.css.properties.boxShadow
 import kotlinx.css.px
+import kotlinx.css.right
 import kotlinx.css.textAlign
 import kotlinx.css.textTransform
+import kotlinx.css.top
+import kotlinx.css.visibility
 import kotlinx.css.width
+import kotlinx.css.zIndex
 import kotlinx.html.ButtonType
 import kotlinx.html.InputType
 import kotlinx.html.js.onChangeFunction
+import kotlinx.html.js.onClickFunction
+import kotlinx.html.js.onMouseOutFunction
+import kotlinx.html.js.onMouseOverFunction
 import kotlinx.html.js.onSubmitFunction
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.events.Event
@@ -47,6 +62,8 @@ import styled.css
 import styled.styledButton
 import styled.styledDiv
 import styled.styledH1
+import styled.styledH3
+import styled.styledImg
 import styled.styledInput
 import styled.styledLabel
 import styled.styledSpan
@@ -59,8 +76,8 @@ val client = HttpClient {
     install(JsonFeature) { serializer = KotlinxSerializer() }
 }
 
-suspend fun createLink(link: Link) {
-    client.post<Unit>(endpoint + Link.path) {
+suspend fun createLink(link: Link): Link {
+    return client.post(endpoint + Link.path) {
         contentType(ContentType.Application.Json)
         body = link
     }
@@ -73,15 +90,29 @@ fun main() {
 }
 
 val App = functionalComponent<RProps> { _ ->
-    val (link, setLink) = useState { Link(name = "", url = "") }
+    val (link, setLink) = useState(Link(name = "", url = ""))
+    val (message, setMessage) = useState("")
 
-    val handleSubmit: (Event) -> Unit = {
+    val handleSubmit: (Event) -> Unit = it@{
         it.preventDefault()
 
+        if (!Link.urlRegex.matches(link.url)) {
+            setMessage("Link is invalid, should begin with http(s).")
+            return@it
+        }
+
+        if (link.name.isNotBlank() && !Link.nameRegex.matches(link.name)) {
+            setMessage("Name is invalid")
+            return@it
+        }
+
         scope.launch {
-            createLink(link)
+            setMessage("creating...")
+            val result = createLink(link)
+            setMessage(endpoint + "/" + result.name)
         }
         setLink(Link("", ""))
+        setMessage("")
     }
 
     val handleNameChange: (Event) -> Unit = {
@@ -97,7 +128,7 @@ val App = functionalComponent<RProps> { _ ->
     styledDiv {
 
         css {
-            width = 80.pct
+            width = 400.px
             margin(48.px, LinearDimension.auto)
             padding(48.px)
             boxShadow(
@@ -126,6 +157,9 @@ val App = functionalComponent<RProps> { _ ->
                 value = link.url,
                 onChange = handleURLChange
             )
+
+            message(text = message)
+
             styledButton(type = ButtonType.submit) {
                 css {
                     display = Display.block
@@ -165,6 +199,79 @@ private fun RBuilder.textInput(name: String, value: String, onChange: (Event) ->
 
             attrs.value = value
             attrs.onChangeFunction = onChange
+        }
+    }
+}
+
+private fun RBuilder.message(text: String) {
+    val show = text.isNotEmpty()
+    val success = text.startsWith("http")
+    val initTips = { if (success) "Click to Copy" else "" }
+
+    println(text)
+    println(success)
+    val (tips, setTips) = useState(initTips)
+
+    styledDiv {
+        css {
+            visibility = if (show) Visibility.visible else Visibility.hidden
+            position = Position.relative
+            display = Display.block
+            textAlign = TextAlign.center
+        }
+        styledH3 {
+            css {
+                display = Display.inlineBlock
+                cursor = Cursor.pointer
+                margin(8.px)
+                borderBottom = "1px dotted black"
+            }
+            attrs.onMouseOverFunction = {
+                setTips(initTips())
+            }
+            attrs.onMouseOutFunction = {
+                setTips("")
+            }
+            attrs.onClickFunction = it@{
+                if (!success) return@it
+                window.navigator.clipboard.writeText(text)
+                    .then {
+                        setTips("Copied")
+                        window.setTimeout(
+                            handler = { setTips(initTips()) },
+                            timeout = 1000
+                        )
+                    }
+            }
+            +text
+        }
+        styledSpan {
+            css {
+                visibility = if (tips.isEmpty()) Visibility.hidden else Visibility.visible
+                position = Position.absolute
+                backgroundColor = Color.black
+                width = 120.px
+                color = Color.white
+                padding(5.px, 0.px)
+                borderRadius = 6.px
+                zIndex = 1
+                marginLeft = 8.px
+                height = 18.px
+                top = 4.px
+            }
+            +tips
+        }
+        styledImg(src = Icon.qrCode) {
+            css {
+                position = Position.absolute
+                visibility = Visibility.hidden
+                right = 0.px
+                height = 24.px
+                width = 24.px
+                top = 50.pct - 12.px
+                cursor = Cursor.pointer
+            }
+            // TODO Show the qrCode when hovering the image
         }
     }
 }
