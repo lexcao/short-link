@@ -1,4 +1,4 @@
-package io.github.lexcao.shortlink
+package io.github.lexcao.shortlink.client
 
 object Icon {
     const val qrCode: String =
