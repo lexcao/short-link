@@ -54,7 +54,9 @@ kotlin {
                 implementation("io.ktor:ktor-server-netty:$ktorVersion")
                 implementation("io.ktor:ktor-server-core:$ktorVersion")
                 implementation("io.ktor:ktor-serialization:$ktorVersion")
+                implementation("io.ktor:ktor-html-builder:$ktorVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serializationVersion")
+                implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:$kotlinHtmlVersion")
 
                 implementation("ch.qos.logback:logback-classic:1.2.3")
                 implementation("org.litote.kmongo:kmongo-coroutine-serialization:4.0.3")

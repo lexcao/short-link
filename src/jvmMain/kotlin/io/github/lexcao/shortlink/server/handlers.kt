@@ -11,7 +11,6 @@ import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
 import io.ktor.util.pipeline.PipelineContext
 
-
 typealias Handler = PipelineContext<Unit, ApplicationCall>
 
 suspend fun Handler.indexPage() {
