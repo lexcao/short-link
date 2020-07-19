@@ -13,10 +13,9 @@ object Store {
 
     init {
         val mongoURI = System.getenv("MONGODB_URI") ?: "mongodb://localhost/"
-        val client = KMongo.createClient(
-            ConnectionString("$mongoURI?retryWrites=false")
-        ).coroutine
-        val database = client.getDatabase("short-link")
+        val connection = ConnectionString("$mongoURI?retryWrites=false")
+        val client = KMongo.createClient(connection).coroutine
+        val database = client.getDatabase(connection.database ?: "short-link")
         mongo = database.getCollection("links")
     }
 
