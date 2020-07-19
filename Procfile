@@ -1,1 +1,1 @@
-web: java -jar build/libs/short-link.jar
+web: ./build/install/short-link/bin/short-link
