@@ -20,9 +20,9 @@ import kotlinx.css.fontSize
 import kotlinx.css.h1
 import kotlinx.css.h3
 import kotlinx.css.height
+import kotlinx.css.img
 import kotlinx.css.input
 import kotlinx.css.margin
-import kotlinx.css.marginLeft
 import kotlinx.css.padding
 import kotlinx.css.paddingRight
 import kotlinx.css.pct
@@ -32,7 +32,6 @@ import kotlinx.css.px
 import kotlinx.css.span
 import kotlinx.css.textAlign
 import kotlinx.css.textTransform
-import kotlinx.css.top
 import kotlinx.css.width
 import kotlinx.css.zIndex
 import styled.StyleSheet
@@ -100,9 +99,12 @@ object CSS : StyleSheet("ComponentStyles") {
             padding(5.px, 0.px)
             borderRadius = 6.px
             zIndex = 1
-            marginLeft = 8.px
             height = 18.px
-            top = 4.px
+        }
+
+        img {
+            margin(0.px, LinearDimension.auto)
+            display = Display.block
         }
     }
 }

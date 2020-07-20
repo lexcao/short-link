@@ -88,6 +88,9 @@ kotlin {
                 implementation("org.jetbrains:kotlin-styled:1.0.0-pre.110-kotlin-1.3.72")
                 implementation(npm("styled-components"))
                 implementation(npm("inline-style-prefixer"))
+
+                // qr code
+                implementation(npm("qrcode"))
             }
         }
     }

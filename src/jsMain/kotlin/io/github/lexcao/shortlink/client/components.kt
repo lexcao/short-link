@@ -1,5 +1,8 @@
 package io.github.lexcao.shortlink.client
 
+import io.github.lexcao.shortlink.scope
+import kotlinx.coroutines.await
+import kotlinx.coroutines.launch
 import kotlinx.html.InputType
 import kotlinx.html.js.onChangeFunction
 import kotlinx.html.js.onClickFunction
@@ -12,6 +15,7 @@ import react.RProps
 import react.ReactElement
 import react.child
 import react.dom.h3
+import react.dom.img
 import react.dom.input
 import react.dom.span
 import react.functionalComponent
@@ -82,21 +86,37 @@ private val Message = functionalComponent<MessageProps> { props ->
             span { +tips }
         }
 
-        /*styledImg(src = Icon.qrCode) {
-            css {
-                position = Position.absolute
-                visibility = Visibility.hidden
-                right = 0.px
-                height = 24.px
-                width = 24.px
-                top = 50.pct - 12.px
-                cursor = Cursor.pointer
-            }
-            // TODO Show the qrCode when hovering the image
-        }*/
+        if (permitCopy) {
+            qrCodeImage(text)
+        }
     }
 }
 
 fun RBuilder.message(handler: MessageProps.() -> Unit): ReactElement = child(Message) {
     attrs { handler() }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+
+external interface QRCodeImageProps : RProps {
+    var text: String
+}
+
+private val QRCodeImage = functionalComponent<QRCodeImageProps> { props ->
+    val text = props.text
+    val (imageString, setImageString) = useState("")
+
+    if (text.isNotEmpty()) {
+        scope.launch {
+            setImageString(generateQRCodeImageString(text).await())
+        }
+    }
+
+    if (imageString.isNotEmpty()) {
+        img(src = imageString) {}
+    }
+}
+
+private fun RBuilder.qrCodeImage(text: String): ReactElement = child(QRCodeImage) {
+    attrs { this.text = text }
 }
